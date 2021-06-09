@@ -31,10 +31,10 @@ pub const CompiledScript = struct {
 pub const CompileOptions = struct {
     builtin_packages: []const BuiltinPackage,
     source: Source,
-    errors_out: std.io.StreamSource.OutStream,
+    errors_out: std.io.StreamSource.Writer,
     errors_color: bool,
-    dump_parse_out: ?std.io.StreamSource.OutStream = null,
-    dump_codegen_out: ?std.io.StreamSource.OutStream = null,
+    dump_parse_out: ?std.io.StreamSource.Writer = null,
+    dump_codegen_out: ?std.io.StreamSource.Writer = null,
 };
 
 pub fn compile(allocator: *std.mem.Allocator, options: CompileOptions) !CompiledScript {

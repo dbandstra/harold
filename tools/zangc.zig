@@ -7,8 +7,8 @@ const dumpBuiltins = @import("zangc/dump_builtins.zig").dumpBuiltins;
 // TODO add an option called `--check` or something, to skip final zig codegen.
 // TODO allow --add-builtins and --dump-builtins to be used with no input script at all
 
-fn usage(out: *std.fs.File.OutStream, program_name: []const u8) !void {
-    try out.print("Usage: {} [options...] -o <dest> <file>\n\n", .{program_name});
+fn usage(out: *std.fs.File.Writer, program_name: []const u8) !void {
+    try out.print("Usage: {s} [options...] -o <dest> <file>\n\n", .{program_name});
     try out.writeAll(
         \\Compile the zangscript source at <file> into Zig code.
         \\
@@ -45,11 +45,11 @@ const Options = struct {
 
 const OptionsParser = struct {
     arena_allocator: *std.mem.Allocator,
-    stderr: *std.fs.File.OutStream,
+    stderr: *std.fs.File.Writer,
     args: std.process.ArgIterator,
     program: []const u8,
 
-    fn init(arena_allocator: *std.mem.Allocator, stderr: *std.fs.File.OutStream) !OptionsParser {
+    fn init(arena_allocator: *std.mem.Allocator, stderr: *std.fs.File.Writer) !OptionsParser {
         var args = std.process.args();
         const program = try args.next(arena_allocator) orelse "zangc";
         return OptionsParser{
@@ -68,19 +68,19 @@ const OptionsParser = struct {
         for (variants) |variant| {
             if (std.mem.eql(u8, arg, variant)) break;
         } else return null;
-        const value = try self.args.next(self.arena_allocator) orelse return self.argError("missing value for '{}'\n", .{arg});
+        const value = try self.args.next(self.arena_allocator) orelse return self.argError("missing value for '{s}'\n", .{arg});
         return value;
     }
 
     fn argError(self: OptionsParser, comptime fmt: []const u8, args: anytype) error{ArgError} {
-        self.stderr.print("{}: ", .{self.program}) catch {};
+        self.stderr.print("{s}: ", .{self.program}) catch {};
         self.stderr.print(fmt, args) catch {};
-        self.stderr.print("Try '{} --help' for more information.\n", .{self.program}) catch {};
+        self.stderr.print("Try '{s} --help' for more information.\n", .{self.program}) catch {};
         return error.ArgError;
     }
 };
 
-fn parseOptions(stderr: *std.fs.File.OutStream, allocator: *std.mem.Allocator) !?Options {
+fn parseOptions(stderr: *std.fs.File.Writer, allocator: *std.mem.Allocator) !?Options {
     var arena = std.heap.ArenaAllocator.init(allocator);
     errdefer arena.deinit();
 
@@ -115,10 +115,10 @@ fn parseOptions(stderr: *std.fs.File.OutStream, allocator: *std.mem.Allocator) !
             } else if (std.mem.eql(u8, value, "never")) {
                 color = .never;
             } else {
-                return parser.argError("invalid value '{}' for '{}'; must be one of 'auto', 'always', 'never'\n", .{ value, arg });
+                return parser.argError("invalid value '{s}' for '{s}'; must be one of 'auto', 'always', 'never'\n", .{ value, arg });
             }
         } else if (std.mem.startsWith(u8, arg, "-")) {
-            return parser.argError("unrecognized option '{}'\n", .{arg});
+            return parser.argError("unrecognized option '{s}'\n", .{arg});
         } else {
             script_filename = arg;
         }
@@ -126,7 +126,7 @@ fn parseOptions(stderr: *std.fs.File.OutStream, allocator: *std.mem.Allocator) !
 
     if (help) {
         defer arena.deinit();
-        var stdout = std.io.getStdOut().outStream();
+        var stdout = std.io.getStdOut().writer();
         try usage(&stdout, parser.program);
         return null;
     }
@@ -143,21 +143,21 @@ fn parseOptions(stderr: *std.fs.File.OutStream, allocator: *std.mem.Allocator) !
     };
 }
 
-fn loadFile(stderr: *std.fs.File.OutStream, allocator: *std.mem.Allocator, filename: []const u8) ![]const u8 {
+fn loadFile(stderr: *std.fs.File.Writer, allocator: *std.mem.Allocator, filename: []const u8) ![]const u8 {
     return std.fs.cwd().readFileAlloc(allocator, filename, 16 * 1024 * 1024) catch |err| {
-        stderr.print("failed to load {}: {}\n", .{ filename, err }) catch {};
+        stderr.print("failed to load {s}: {}\n", .{ filename, err }) catch {};
         return error.Failed;
     };
 }
 
-fn createFile(stderr: *std.fs.File.OutStream, filename: []const u8) !std.fs.File {
+fn createFile(stderr: *std.fs.File.Writer, filename: []const u8) !std.fs.File {
     return std.fs.cwd().createFile(filename, .{}) catch |err| {
-        stderr.print("failed to open {} for writing: {}\n", .{ filename, err }) catch {};
+        stderr.print("failed to open {s} for writing: {}\n", .{ filename, err }) catch {};
         return error.Failed;
     };
 }
 
-fn mainInner(stderr: *std.fs.File.OutStream) !void {
+fn mainInner(stderr: *std.fs.File.Writer) !void {
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
 
     var allocator = &gpa.allocator;
@@ -187,7 +187,7 @@ fn mainInner(stderr: *std.fs.File.OutStream) !void {
         // start with an underscore because such identifiers are illegal in zangscript so there's no chance of collision
         var buf: [100]u8 = undefined;
         var fbs = std.io.fixedBufferStream(&buf);
-        fbs.outStream().print("_custom{}", .{i}) catch unreachable;
+        fbs.writer().print("_custom{}", .{i}) catch unreachable;
         const name = fbs.getWritten();
 
         // generated zig code will be importing this file, so get a path relative to the output zig file
@@ -203,7 +203,7 @@ fn mainInner(stderr: *std.fs.File.OutStream) !void {
         var file = try createFile(stderr, filename);
         defer file.close();
 
-        try dumpBuiltins(@as(std.io.StreamSource, .{ .file = file }).outStream(), builtin_packages.items);
+        try dumpBuiltins(@as(std.io.StreamSource, .{ .file = file }).writer(), builtin_packages.items);
     }
 
     // read in source file
@@ -215,7 +215,7 @@ fn mainInner(stderr: *std.fs.File.OutStream) !void {
     const context: zangscript.Context = .{
         .builtin_packages = builtin_packages.items,
         .source = .{ .filename = options.script_filename, .contents = contents },
-        .errors_out = @as(std.io.StreamSource, .{ .file = errors_file }).outStream(),
+        .errors_out = @as(std.io.StreamSource, .{ .file = errors_file }).writer(),
         .errors_color = switch (options.color) {
             .auto => errors_file.isTty(),
             .always => true,
@@ -229,7 +229,7 @@ fn mainInner(stderr: *std.fs.File.OutStream) !void {
             var file = try createFile(stderr, filename);
             defer file.close();
 
-            break :blk try zangscript.parse(context, allocator, @as(std.io.StreamSource, .{ .file = file }).outStream());
+            break :blk try zangscript.parse(context, allocator, @as(std.io.StreamSource, .{ .file = file }).writer());
         } else {
             break :blk try zangscript.parse(context, allocator, null);
         }
@@ -242,7 +242,7 @@ fn mainInner(stderr: *std.fs.File.OutStream) !void {
             var file = try createFile(stderr, filename);
             defer file.close();
 
-            break :blk try zangscript.codegen(context, parse_result, allocator, @as(std.io.StreamSource, .{ .file = file }).outStream());
+            break :blk try zangscript.codegen(context, parse_result, allocator, @as(std.io.StreamSource, .{ .file = file }).writer());
         } else {
             break :blk try zangscript.codegen(context, parse_result, allocator, null);
         }
@@ -266,7 +266,7 @@ fn mainInner(stderr: *std.fs.File.OutStream) !void {
     var file = try createFile(stderr, options.output_filename);
     defer file.close();
 
-    try zangscript.generateZig(@as(std.io.StreamSource, .{ .file = file }).outStream(), builtin_packages.items, script);
+    try zangscript.generateZig(@as(std.io.StreamSource, .{ .file = file }).writer(), builtin_packages.items, script);
 }
 
 pub fn main() u8 {

@@ -171,14 +171,14 @@ pub const ModuleBase = struct {
             inline for (struct_fields) |field| {
                 if (std.mem.eql(u8, field.name, param.name)) {
                     values[i] = Value.fromZig(param.param_type, @field(params, field.name)) orelse {
-                        std.debug.warn("makeParams: type mismatch on param \"{}\"\n", .{param.name});
+                        std.debug.warn("makeParams: type mismatch on param \"{s}\"\n", .{param.name});
                         return null;
                     };
                     found = true;
                 }
             }
             if (!found) {
-                std.debug.warn("makeParams: missing param \"{}\"\n", .{param.name});
+                std.debug.warn("makeParams: missing param \"{s}\"\n", .{param.name});
                 return null;
             }
         }

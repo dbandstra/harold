@@ -51,7 +51,11 @@ const BuiltinParser = struct {
         return null;
     }
 
-    fn parseParams(self: BuiltinParser, stderr: *std.fs.File.OutStream, var_decl: *const std.zig.ast.Node.VarDecl) ![]const zangscript.ModuleParam {
+    fn parseParams(
+        self: BuiltinParser,
+        stderr: *std.fs.File.Writer,
+        var_decl: *const std.zig.ast.Node.VarDecl,
+    ) ![]const zangscript.ModuleParam {
         const init_node = var_decl.getInitNode() orelse {
             try stderr.print("expected init node\n", .{});
             return error.Failed;
@@ -71,7 +75,7 @@ const BuiltinParser = struct {
                 return error.Failed;
             };
             const param_type = self.parseParamType(type_expr) orelse {
-                try stderr.print("{}: unrecognized param type\n", .{name});
+                try stderr.print("{s}: unrecognized param type\n", .{name});
                 return error.Failed;
             };
             try params.append(.{
@@ -83,7 +87,11 @@ const BuiltinParser = struct {
         return params.items;
     }
 
-    fn parseTopLevelDecl(self: BuiltinParser, stderr: *std.fs.File.OutStream, var_decl: *std.zig.ast.Node.VarDecl) !?zangscript.BuiltinModule {
+    fn parseTopLevelDecl(
+        self: BuiltinParser,
+        stderr: *std.fs.File.Writer,
+        var_decl: *std.zig.ast.Node.VarDecl,
+    ) !?zangscript.BuiltinModule {
         // TODO check for `pub`, and initial uppercase
         const init_node = var_decl.getInitNode() orelse return null;
         const container_decl = init_node.castTag(.ContainerDecl) orelse return null;
@@ -126,7 +134,7 @@ const BuiltinParser = struct {
 pub fn parseBuiltins(
     arena_allocator: *std.mem.Allocator,
     temp_allocator: *std.mem.Allocator,
-    stderr: *std.fs.File.OutStream,
+    stderr: *std.fs.File.Writer,
     name: []const u8,
     filename: []const u8,
     contents: []const u8,
@@ -134,19 +142,19 @@ pub fn parseBuiltins(
     var builtins = std.ArrayList(zangscript.BuiltinModule).init(arena_allocator);
     var enums = std.ArrayList(zangscript.BuiltinEnum).init(arena_allocator);
 
-    const tree = std.zig.parse(temp_allocator, contents) catch |err| {
-        try stderr.print("failed to parse {}: {}\n", .{ filename, err });
+    var tree = std.zig.parse(temp_allocator, contents) catch |err| {
+        try stderr.print("failed to parse {s}: {}\n", .{ filename, err });
         return error.Failed;
     };
-    defer tree.deinit();
+    defer tree.deinit(temp_allocator);
 
     if (tree.errors.len > 0) {
-        try stderr.print("parse error in {}\n", .{filename});
+        try stderr.print("parse error in {s}\n", .{filename});
         for (tree.errors) |err| {
-            const token_loc = tree.token_locs[err.loc()];
+            const token_start = tree.tokens.items(.start)[err.token];
             var line: usize = 1;
             var col: usize = 1;
-            for (contents[0..token_loc.start]) |ch| {
+            for (contents[0..token_start]) |ch| {
                 if (ch == '\n') {
                     line += 1;
                     col = 1;
@@ -155,7 +163,7 @@ pub fn parseBuiltins(
                 }
             }
             try stderr.print("(line {}, col {}) ", .{ line, col });
-            try err.render(tree.token_ids, stderr);
+            try tree.renderError(err, stderr);
             try stderr.writeAll("\n");
         }
         return error.Failed;
@@ -164,11 +172,13 @@ pub fn parseBuiltins(
     var bp: BuiltinParser = .{
         .arena_allocator = arena_allocator,
         .contents = contents,
-        .tree = tree,
+        .tree = &tree,
     };
 
-    for (tree.root_node.declsConst()) |node_ptr| {
-        const var_decl = node_ptr.castTag(.VarDecl) orelse continue;
+    for (tree.rootDecls()) |node_index| {
+        if (tree.nodes.items(.tag)[node_index] != .global_var_decl)
+            continue;
+        const var_decl = tree.globalVarDecl(node_index);
         if (try bp.parseTopLevelDecl(stderr, var_decl)) |builtin| {
             try builtins.append(builtin);
         }

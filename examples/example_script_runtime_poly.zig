@@ -83,7 +83,7 @@ pub const MainModule = struct {
         var script = zangscript.compile(allocator, .{
             .builtin_packages = &builtin_packages,
             .source = .{ .filename = filename, .contents = contents },
-            .errors_out = errors_stream.outStream(),
+            .errors_out = errors_stream.writer(),
             .errors_color = false,
         }) catch |err| {
             // StreamSource api flaw, see https://github.com/ziglang/zig/issues/5338

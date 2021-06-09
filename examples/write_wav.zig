@@ -38,8 +38,7 @@ pub fn main() !void {
     defer file.close();
     var writer = file.writer();
 
-    const WavSaver = wav.Saver(@TypeOf(writer));
-    try WavSaver.writeHeader(writer, .{
+    try wav.writeHeader(writer, .{
         .num_channels = example.MainModule.num_outputs,
         .sample_rate = example.AUDIO_SAMPLE_RATE,
         .format = switch (example.AUDIO_FORMAT) {
@@ -94,6 +93,5 @@ pub fn main() !void {
         progress_node.completeOne();
     }
 
-    var seeker = file.seekableStream();
-    try WavSaver.patchHeader(writer, seeker, bytes_written);
+    try wav.patchHeader(writer, file.seekableStream(), bytes_written);
 }

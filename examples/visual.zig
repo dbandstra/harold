@@ -158,7 +158,7 @@ fn getFFTValue(f_: f32, in_fft: []const f32, logarithmic: bool) f32 {
 }
 
 pub const BlitContext = struct {
-    recorder_state: @TagType(Recorder.State),
+    recorder_state: std.meta.TagType(Recorder.State),
 };
 
 pub const VTable = struct {
@@ -824,7 +824,7 @@ pub const DrawRecorderState = struct {
     y: usize,
     width: usize,
     height: usize,
-    recorder_state: @TagType(Recorder.State),
+    recorder_state: std.meta.TagType(Recorder.State),
 
     pub fn new(allocator: *std.mem.Allocator, x: usize, y: usize, width: usize, height: usize) !*DrawRecorderState {
         var self = try allocator.create(DrawRecorderState);

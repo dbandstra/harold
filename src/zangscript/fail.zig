@@ -56,9 +56,9 @@ fn printError(ctx: Context, maybe_source_range: ?SourceRange, comptime fmt: []co
 
     const source_range = maybe_source_range orelse {
         // we don't know where in the source file the error occurred
-        try out.print("{}{}{}: {}", .{ KYEL, KBOLD, ctx.source.filename, KWHITE });
+        try out.print("{s}{s}{s}: {s}", .{ KYEL, KBOLD, ctx.source.filename, KWHITE });
         try printErrorMessage(out, null, ctx.source.contents, fmt, args);
-        try out.print("{}\n\n", .{KNRM});
+        try out.print("{s}\n\n", .{KNRM});
         return;
     };
 
@@ -84,11 +84,11 @@ fn printError(ctx: Context, maybe_source_range: ?SourceRange, comptime fmt: []co
     const column_num = source_range.loc0.index - start + 1;
 
     // print source filename, line number, and column number
-    try out.print("{}{}{}:{}:{}: {}", .{ KYEL, KBOLD, ctx.source.filename, line_num, column_num, KWHITE });
+    try out.print("{s}{s}{s}:{}:{}: {s}", .{ KYEL, KBOLD, ctx.source.filename, line_num, column_num, KWHITE });
 
     // print the error message
     try printErrorMessage(out, maybe_source_range, ctx.source.contents, fmt, args);
-    try out.print("{}\n\n", .{KNRM});
+    try out.print("{s}\n\n", .{KNRM});
 
     if (source_range.loc0.index == source_range.loc1.index) {
         // if there's no span, it's probably an "expected X, found end of file" error.
@@ -97,18 +97,18 @@ fn printError(ctx: Context, maybe_source_range: ?SourceRange, comptime fmt: []co
     }
 
     // echo the source line
-    try out.print("{}\n", .{ctx.source.contents[start..end]});
+    try out.print("{s}\n", .{ctx.source.contents[start..end]});
 
     // show arrows pointing at the problematic span
     i = start;
     while (i < source_range.loc0.index) : (i += 1) {
         try out.print(" ", .{});
     }
-    try out.print("{}{}", .{ KRED, KBOLD });
+    try out.print("{s}{s}", .{ KRED, KBOLD });
     while (i < end and i < source_range.loc1.index) : (i += 1) {
         try out.print("^", .{});
     }
-    try out.print("{}\n", .{KNRM});
+    try out.print("{s}\n", .{KNRM});
 }
 
 pub fn fail(ctx: Context, maybe_source_range: ?SourceRange, comptime fmt: []const u8, args: anytype) error{Failed} {

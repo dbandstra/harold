@@ -1,0 +1,2 @@
+- the SDL examples only work if you build them with `ZIG_SYSTEM_LINKER_HACK=1`
+- `zig build zangc` doesn't work yet, I need to update a bunch of zig AST stuff.

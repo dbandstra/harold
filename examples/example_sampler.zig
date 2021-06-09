@@ -26,9 +26,8 @@ pub const DESCRIPTION =
 fn readWav(comptime filename: []const u8) !mod.Sampler.Sample {
     const buf = @embedFile(filename);
     var fbs = std.io.fixedBufferStream(buf);
-    var stream = fbs.inStream();
-    const Loader = wav.Loader(@TypeOf(stream), true);
-    const preloaded = try Loader.preload(&stream);
+
+    const preloaded = try wav.preload(fbs.reader());
 
     // don't call Loader.load because we're working on a slice, so we can just
     // take a subslice of it

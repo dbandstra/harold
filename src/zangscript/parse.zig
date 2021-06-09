@@ -530,7 +530,7 @@ fn expectExpression2(ps: *ParseState, pc: ParseContext, priority: usize) ParseEr
     while (true) {
         const token = try ps.tokenizer.peek();
         for (binary_operators) |bo| {
-            const T = @TagType(TokenType);
+            const T = std.meta.TagType(TokenType);
             if (@as(T, token.tt) == @as(T, bo.symbol) and priority < bo.priority) {
                 _ = try ps.tokenizer.next(); // skip the peeked token
                 const b = try expectExpression2(ps, pc, bo.priority);
@@ -750,7 +750,7 @@ pub const ParseResult = struct {
 pub fn parse(
     ctx: Context,
     inner_allocator: *std.mem.Allocator,
-    dump_parse_out: ?std.io.StreamSource.OutStream,
+    dump_parse_out: ?std.io.StreamSource.Writer,
 ) !ParseResult {
     var arena = std.heap.ArenaAllocator.init(inner_allocator);
     errdefer arena.deinit();

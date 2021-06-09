@@ -26,6 +26,6 @@ pub const SourceRange = struct {
 pub const Context = struct {
     builtin_packages: []const BuiltinPackage,
     source: Source,
-    errors_out: std.io.StreamSource.OutStream,
+    errors_out: std.io.StreamSource.Writer,
     errors_color: bool,
 };

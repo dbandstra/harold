@@ -18,18 +18,18 @@ fn testAll(
     trigger: *Trigger(f32),
     iap: Notes(f32).ImpulsesAndParamses,
     expected: []const ExpectedResult,
-) void {
+) !void {
     var ctr = trigger.counter(span, iap);
 
     for (expected) |e| {
         const r = trigger.next(&ctr).?;
-        std.testing.expectEqual(e.start, r.span.start);
-        std.testing.expectEqual(e.end, r.span.end);
-        std.testing.expectEqual(e.params, r.params);
-        std.testing.expectEqual(e.note_id_changed, r.note_id_changed);
+        try std.testing.expectEqual(e.start, r.span.start);
+        try std.testing.expectEqual(e.end, r.span.end);
+        try std.testing.expectEqual(e.params, r.params);
+        try std.testing.expectEqual(e.note_id_changed, r.note_id_changed);
     }
 
-    std.testing.expectEqual(
+    try std.testing.expectEqual(
         @as(?Trigger(f32).NewPaintReturnValue, null),
         trigger.next(&ctr),
     );
@@ -38,7 +38,7 @@ fn testAll(
 test "Trigger: no notes" {
     var trigger = Trigger(f32).init();
 
-    testAll(&trigger, .{
+    try testAll(&trigger, .{
         .impulses = &[_]Impulse{},
         .paramses = &[_]f32{},
     }, &[_]ExpectedResult{});
@@ -47,7 +47,7 @@ test "Trigger: no notes" {
 test "Trigger: first note at frame=0" {
     var trigger = Trigger(f32).init();
 
-    testAll(&trigger, .{
+    try testAll(&trigger, .{
         .impulses = &[_]Impulse{
             .{ .frame = 0, .note_id = 1, .event_id = 1 },
         },
@@ -62,7 +62,7 @@ test "Trigger: first note at frame=0" {
 test "Trigger: first note after frame=0" {
     var trigger = Trigger(f32).init();
 
-    testAll(&trigger, .{
+    try testAll(&trigger, .{
         .impulses = &[_]Impulse{
             .{ .frame = 500, .note_id = 1, .event_id = 1 },
         },
@@ -77,7 +77,7 @@ test "Trigger: first note after frame=0" {
 test "Trigger: carryover" {
     var trigger = Trigger(f32).init();
 
-    testAll(&trigger, .{
+    try testAll(&trigger, .{
         .impulses = &[_]Impulse{
             .{ .frame = 0, .note_id = 1, .event_id = 1 },
             .{ .frame = 200, .note_id = 2, .event_id = 2 },
@@ -91,7 +91,7 @@ test "Trigger: carryover" {
         .{ .start = 200, .end = 1024, .params = 220.0, .note_id_changed = true },
     });
 
-    testAll(&trigger, .{
+    try testAll(&trigger, .{
         .impulses = &[_]Impulse{
             .{ .frame = 500, .note_id = 3, .event_id = 1 },
             .{ .frame = 600, .note_id = 3, .event_id = 2 }, // same
@@ -106,7 +106,7 @@ test "Trigger: carryover" {
         .{ .start = 600, .end = 1024, .params = 660.0, .note_id_changed = false },
     });
 
-    testAll(&trigger, .{
+    try testAll(&trigger, .{
         .impulses = &[_]Impulse{},
         .paramses = &[_]f32{},
     }, &[_]ExpectedResult{
@@ -117,7 +117,7 @@ test "Trigger: carryover" {
 test "Trigger: two notes starting at the same time" {
     var trigger = Trigger(f32).init();
 
-    testAll(&trigger, .{
+    try testAll(&trigger, .{
         .impulses = &[_]Impulse{
             .{ .frame = 200, .note_id = 1, .event_id = 1 },
             .{ .frame = 200, .note_id = 2, .event_id = 2 },

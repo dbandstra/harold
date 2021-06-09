@@ -29,15 +29,15 @@ test "PolyphonyDispatcher: 5 note-ons with 3 slots" {
 
     const result = pd.dispatch(iap);
 
-    std.testing.expectEqual(@as(usize, 1), result[0].impulses[0].note_id);
-    std.testing.expectEqual(@as(usize, 2), result[1].impulses[0].note_id);
-    std.testing.expectEqual(@as(usize, 3), result[2].impulses[0].note_id);
-    std.testing.expectEqual(@as(usize, 4), result[0].impulses[1].note_id);
-    std.testing.expectEqual(@as(usize, 5), result[1].impulses[1].note_id);
+    try std.testing.expectEqual(@as(usize, 1), result[0].impulses[0].note_id);
+    try std.testing.expectEqual(@as(usize, 2), result[1].impulses[0].note_id);
+    try std.testing.expectEqual(@as(usize, 3), result[2].impulses[0].note_id);
+    try std.testing.expectEqual(@as(usize, 4), result[0].impulses[1].note_id);
+    try std.testing.expectEqual(@as(usize, 5), result[1].impulses[1].note_id);
 
-    std.testing.expectEqual(@as(usize, 2), result[0].impulses.len);
-    std.testing.expectEqual(@as(usize, 2), result[1].impulses.len);
-    std.testing.expectEqual(@as(usize, 1), result[2].impulses.len);
+    try std.testing.expectEqual(@as(usize, 2), result[0].impulses.len);
+    try std.testing.expectEqual(@as(usize, 2), result[1].impulses.len);
+    try std.testing.expectEqual(@as(usize, 1), result[2].impulses.len);
 }
 
 test "PolyphonyDispatcher: single note on and off" {
@@ -62,15 +62,15 @@ test "PolyphonyDispatcher: single note on and off" {
 
     const result = pd.dispatch(iap);
 
-    std.testing.expectEqual(@as(usize, 1), result[0].impulses[0].note_id);
-    std.testing.expectEqual(@as(usize, 1), result[0].impulses[1].note_id);
-    std.testing.expectEqual(@as(usize, 2), result[1].impulses[0].note_id);
-    std.testing.expectEqual(@as(usize, 2), result[1].impulses[1].note_id);
-    std.testing.expectEqual(@as(usize, 3), result[2].impulses[0].note_id);
+    try std.testing.expectEqual(@as(usize, 1), result[0].impulses[0].note_id);
+    try std.testing.expectEqual(@as(usize, 1), result[0].impulses[1].note_id);
+    try std.testing.expectEqual(@as(usize, 2), result[1].impulses[0].note_id);
+    try std.testing.expectEqual(@as(usize, 2), result[1].impulses[1].note_id);
+    try std.testing.expectEqual(@as(usize, 3), result[2].impulses[0].note_id);
 
-    std.testing.expectEqual(@as(usize, 2), result[0].impulses.len);
-    std.testing.expectEqual(@as(usize, 2), result[1].impulses.len);
-    std.testing.expectEqual(@as(usize, 1), result[2].impulses.len);
+    try std.testing.expectEqual(@as(usize, 2), result[0].impulses.len);
+    try std.testing.expectEqual(@as(usize, 2), result[1].impulses.len);
+    try std.testing.expectEqual(@as(usize, 1), result[2].impulses.len);
 }
 
 test "PolyphonyDispatcher: reuse least recently released slot" {
@@ -101,19 +101,19 @@ test "PolyphonyDispatcher: reuse least recently released slot" {
 
     const result = pd.dispatch(iap);
 
-    std.testing.expectEqual(@as(usize, 1), result[0].impulses[0].note_id);
-    std.testing.expectEqual(@as(usize, 2), result[1].impulses[0].note_id);
-    std.testing.expectEqual(@as(usize, 3), result[2].impulses[0].note_id);
+    try std.testing.expectEqual(@as(usize, 1), result[0].impulses[0].note_id);
+    try std.testing.expectEqual(@as(usize, 2), result[1].impulses[0].note_id);
+    try std.testing.expectEqual(@as(usize, 3), result[2].impulses[0].note_id);
 
-    std.testing.expectEqual(@as(usize, 3), result[2].impulses[1].note_id);
-    std.testing.expectEqual(@as(usize, 2), result[1].impulses[1].note_id);
-    std.testing.expectEqual(@as(usize, 1), result[0].impulses[1].note_id);
+    try std.testing.expectEqual(@as(usize, 3), result[2].impulses[1].note_id);
+    try std.testing.expectEqual(@as(usize, 2), result[1].impulses[1].note_id);
+    try std.testing.expectEqual(@as(usize, 1), result[0].impulses[1].note_id);
 
     // slot 0 is the least recent note-on.
     // slot 2 is the least recent note-off. this is what we want
-    std.testing.expectEqual(@as(usize, 4), result[2].impulses[2].note_id);
+    try std.testing.expectEqual(@as(usize, 4), result[2].impulses[2].note_id);
 
-    std.testing.expectEqual(@as(usize, 2), result[0].impulses.len);
-    std.testing.expectEqual(@as(usize, 2), result[1].impulses.len);
-    std.testing.expectEqual(@as(usize, 3), result[2].impulses.len);
+    try std.testing.expectEqual(@as(usize, 2), result[0].impulses.len);
+    try std.testing.expectEqual(@as(usize, 2), result[1].impulses.len);
+    try std.testing.expectEqual(@as(usize, 3), result[2].impulses.len);
 }

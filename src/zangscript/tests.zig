@@ -88,5 +88,5 @@ test "example test" {
     ;
     const compiled = try compileScript(&gpa.allocator, script);
     defer gpa.allocator.free(compiled);
-    std.testing.expectEqualSlices(u8, expected, compiled);
+    try std.testing.expectEqualSlices(u8, expected, compiled);
 }

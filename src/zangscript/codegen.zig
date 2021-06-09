@@ -158,7 +158,7 @@ pub const CodegenState = struct {
     global_visited: []bool,
     track_results: []?CodeGenTrackResult,
     module_results: []?CodeGenModuleResult,
-    dump_codegen_out: ?std.io.StreamSource.OutStream,
+    dump_codegen_out: ?std.io.StreamSource.Writer,
 };
 
 pub const CodegenModuleState = struct {
@@ -1074,7 +1074,7 @@ pub fn codegen(
     ctx: Context,
     parse_result: ParseResult,
     inner_allocator: *std.mem.Allocator,
-    dump_codegen_out: ?std.io.StreamSource.OutStream,
+    dump_codegen_out: ?std.io.StreamSource.Writer,
 ) !CodeGenResult {
     var arena = std.heap.ArenaAllocator.init(inner_allocator);
     errdefer arena.deinit();
